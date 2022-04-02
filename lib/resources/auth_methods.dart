@@ -22,10 +22,11 @@ class AuthMethods {
           userName.isNotEmpty ||
           bio.isNotEmpty ||
           file != null
-      ){
+      ) {
         UserCredential cred = await _auth.createUserWithEmailAndPassword(
             email: email, password: password);
-        String photoURL = await StorageMethods().uploadImageToStorage('profilePics', file, false);
+        String photoURL = await StorageMethods().uploadImageToStorage(
+            'profilePics', file, false);
         await _firestore.collection('users').doc(cred.user!.uid).set({
           'username': userName,
           'uid': cred.user!.uid,
@@ -38,13 +39,36 @@ class AuthMethods {
 
         res = "success";
       }
-    } on FirebaseAuthException catch (err){
-      if(err.code == 'inalid-email'){
+    } on FirebaseAuthException catch (err) {
+      if (err.code == 'inalid-email') {
         res = 'The email is badly formatted';
       }
     }
 
     catch (err) {
+      res = err.toString();
+    }
+    return res;
+  }
+
+
+  Future<String> loginUser({ required String email,
+    required String password,})async {
+    String res = "some error occurred";
+    try{
+      if(email.isNotEmpty || password.isNotEmpty){
+        _auth.signInWithEmailAndPassword(email: email, password: password);
+        res = 'success';
+      }else{
+        res = 'Please enter all the fields';
+      }
+    }on FirebaseAuthException catch (e){
+      if(e.code == 'User-not-found'){
+        res = 'Wrong Username';
+      }
+    }
+
+    catch(err){
       res = err.toString();
     }
     return res;
